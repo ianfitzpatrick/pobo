@@ -42,6 +42,8 @@ def process_message(data, debug=False):
 
                 if cmd.startswith('load'):
                     savefile = cmd.split('load')[1]
+                    
+
 
 
                 game_dict['command'] = cmd
