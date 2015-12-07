@@ -1,0 +1,4 @@
+*.pyc
+/rtmbot.conf
+/debug/**
+.DS_Store
