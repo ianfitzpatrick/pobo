@@ -1,3 +1,4 @@
+import os
 import json
 import re
 import requests
@@ -18,6 +19,8 @@ game_dict = {
         }
 
 last_command = None
+
+game_list = json.loads( open(os.getcwd() + '/plugins/play/games.json').read() )
 
 def process_message(data):
     """
@@ -43,6 +46,28 @@ def process_message(data):
         # Start a new game
         if cmd.startswith('start'):
             r = start_game(cmd)
+
+
+        # Get list of games available to play
+        if cmd.startswith('list games'):
+            if cmd.split('list games')[1]:
+                cat_num = int(cmd.split('list games')[1].strip())
+                cat_games = game_list['categories'][cat_num - 1]
+                output = '*Category:* %s\n\n```' % cat_games['category']
+                
+                for game in cat_games['games']:
+                    output += '%d) %s\n' % (game['game_id'], game['game_title'])
+                    output += '    %s\n\n' % game['game_desc']
+
+                output += '```\n*Type `pobo play start <game number>` to begin playing*'
+
+            else:                
+                output = '*CATEGORIES*\n```' 
+                for idx, item in enumerate(game_list['categories'], 1):
+                    output += '%d) %s\n' % (idx, item['category'])
+                output += '```\n*Type `pobo list games <category number>` to get a list of games*'
+
+            return outputs.append([data['channel'], output])            
 
         # Load an existing game
         if cmd.startswith('load'):
