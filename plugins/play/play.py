@@ -43,6 +43,10 @@ def process_message(data):
             else:
                 outputs.append([data['channel'], 'Hmmm...looks like a bougus save file.'])
 
+        if cmd == 'save':
+            savegame_gist = save_game()
+            return outputs.append([data['channel'], '*GAME SAVED*\nGame ID: %s (%s)' % (savegame_gist['id'], savegame_gist['url'])])
+
         # Wipe savegame from memory and start game from scratch
         if cmd == 'restart':
             # Re-init game state
@@ -111,4 +115,25 @@ def load_game(cmd):
     except IndexError:
         return False
 
+def save_game():
+    """
+    Load a saved game state from an external github gist.
+    Formatted as JSON.
+    """
+    global game_dict
+    saved_game_dict = {
+                        'cat': game_dict['cat'],
+                        'game': game_dict['game'],
+                        'savegame': game_dict['savegame']
+                      }
+
+    post_dict = {
+                    'description': 'Save Game File',
+                    'public': True,
+                    'files': {'savegame.txt': {'content': json.dumps(saved_game_dict) }}
+
+                }
+    r = requests.post('https://api.github.com/gists', data=json.dumps(post_dict))
+    r = r.json()
+    return r
 
