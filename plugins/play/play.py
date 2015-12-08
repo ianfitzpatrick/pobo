@@ -3,7 +3,7 @@ import json
 import re
 import requests
 import urllib
-from BeautifulSoup import BeautifulSoup
+from bs4 import BeautifulSoup
 
 outputs = []
 
@@ -59,13 +59,13 @@ def process_message(data):
                     output += '%d) %s\n' % (game['game_id'], game['game_title'])
                     output += '    %s\n\n' % game['game_desc']
 
-                output += '```\n*Type `pobo play start <game number>` to begin playing*'
+                output += '```\n_Type_ `pobo play start <game number>` _to begin playing_'
 
             else:                
                 output = '*CATEGORIES*\n```' 
                 for idx, item in enumerate(game_list['categories'], 1):
                     output += '%d) %s\n' % (idx, item['category'])
-                output += '```\n*Type `pobo list games <category number>` to get a list of games*'
+                output += '```\n_Type_ `pobo play list games <category number>` _to get a list of games_'
 
             return outputs.append([data['channel'], output])            
 
@@ -90,7 +90,7 @@ def process_message(data):
         # First time game loads, we don't have a save game state, so use GET request
         try:
             if not game_dict['savegame'] and not r:
-                    return outputs.append([data['channel'], 'Please *start* a game first.\nFor a list of games, type: `pobo play list`'])
+                    return outputs.append([data['channel'], '_Please *start* a game first.\nFor a list of games, type:_ `pobo play list games`'])
             elif game_dict['savegame']:
                 r = requests.post(game_url, data=game_dict)
         except NameError:
@@ -111,22 +111,20 @@ def format_response(request):
     """
     global last_command
 
-    soup = BeautifulSoup(request.text)
+    soup = BeautifulSoup(request.text, 'html5lib')
 
     # Get response from game server to our command
     response = soup.find('pre').text
 
     # Get rid of last input line
-    response = response.rstrip('&gt;')
-
-    # Convert all tabs that don't start with a line break, to just line breaks instead
-    response = re.sub('(\w)(    +)',r'\1\n',  response)    
+    response = response.rstrip().rstrip('>').rstrip()
 
     if game_dict['savegame']: 
-        response = response.split('&gt;')[-1] # Only get latest response, not all history
+        response = response.split('>')[-1] # Only get latest response, not all history
 
     response = response.strip(last_command) # Get rid of previous command
-    response = response.rstrip()
+    response = response.strip().rstrip()
+    response = '```\n%s\n```' % response
 
     return response
 
