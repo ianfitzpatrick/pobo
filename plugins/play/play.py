@@ -6,22 +6,25 @@ from BeautifulSoup import BeautifulSoup
 
 outputs = []
 
-game_url = 'http://www.ifiction.org/games/playz.php?cat=2&game=3&mode=html'
+game_url = 'http://www.ifiction.org/games/playz.php'
 
 game_dict = {
-            'cat': 2,
-            'game': 3,
+            'cat': None,
+            'game': None,
             'mode': 'html',
             'command': None,
             'savegame': None,
             'submit': 'Do it' # Almost certainly can get rid of this
         }
 
+last_command = None
+
 def process_message(data):
     """
     Parse incoming message for play command
     """
     global game_dict
+    global last_command 
 
     if data['text'].startswith( ('pobo play', '!') ):
 
@@ -35,28 +38,37 @@ def process_message(data):
 
         # Set cmd here so it can be overwritten below if needed
         game_dict['command'] = cmd
+        last_command = cmd
 
+        # Start a new game
+        if cmd.startswith('start'):
+            r = start_game(cmd)
+
+        # Load an existing game
         if cmd.startswith('load'):
             game_loaded = load_game(cmd)
             if game_loaded:
-                outputs.append([data['channel'], 'SAVE GAME LOADED'])
+                outputs.append([data['channel'], '*SAVE GAME LOADED*'])
             else:
                 outputs.append([data['channel'], 'Hmmm...looks like a bougus save file.'])
 
+        # Save current game
         if cmd == 'save':
             savegame_gist = save_game()
             return outputs.append([data['channel'], '*GAME SAVED*\nGame ID: %s (%s)' % (savegame_gist['id'], savegame_gist['url'])])
 
-        # Wipe savegame from memory and start game from scratch
+        # Restart current game
         if cmd == 'restart':
             # Re-init game state
             game_dict['savegame'] = None
 
-
         # First time game loads, we don't have a save game state, so use GET request
-        if not game_dict['savegame']:
-            r = requests.get(game_url)
-        else:
+        try:
+            if not game_dict['savegame'] and not r:
+                    return outputs.append([data['channel'], 'Please *start* a game first.\nFor a list of games, type: `pobo play list`'])
+            elif game_dict['savegame']:
+                r = requests.post(game_url, data=game_dict)
+        except NameError:
             r = requests.post(game_url, data=game_dict)
 
         # Update global save game state for next time
@@ -72,23 +84,49 @@ def format_response(request):
     """
     Given a python requests object, trim and clean response
     """
+    global last_command
 
     soup = BeautifulSoup(request.text)
 
     # Get response from game server to our command
     response = soup.find('pre').text
 
-    # Clean up response
+    # Get rid of last input line
     response = response.rstrip('&gt;')
+
+    # Convert all tabs that don't start with a line break, to just line breaks instead
+    response = re.sub('(\w)(    +)',r'\1\n',  response)    
 
     if game_dict['savegame']: 
         response = response.split('&gt;')[-1] # Only get latest response, not all history
 
-    response = response.split('\n', 1)[1] # Get rid of previous command response
+    response = response.strip(last_command) # Get rid of previous command
     response = response.rstrip()
 
     return response
 
+
+def start_game(cmd):
+    """
+    Start a new game given game id
+    """
+    global game_dict
+    
+    game_id = cmd.split('start')[1].strip()
+    
+    # Assign game ID, re-initialize all other game dict settings
+    game_dict['cat'] = None
+    game_dict['game'] = game_id
+    game_dict['savegame'] = None
+    game_dict['cat'] = None
+
+
+
+    url = '%s?game=%s' % (game_url, game_id)
+    r = requests.get(url)
+    return r
+
+        
 
 def load_game(cmd):
     """
@@ -117,7 +155,7 @@ def load_game(cmd):
 
 def save_game():
     """
-    Load a saved game state from an external github gist.
+    Save game state to an external github gist.
     Formatted as JSON.
     """
     global game_dict
