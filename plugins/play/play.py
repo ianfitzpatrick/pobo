@@ -80,7 +80,7 @@ def process_message(data):
         # Save current game
         if cmd == 'save':
             savegame_gist = save_game()
-            return outputs.append([data['channel'], '*GAME SAVED*\nGame ID: %s (%s)' % (savegame_gist['id'], savegame_gist['url'])])
+            return outputs.append([data['channel'], '*GAME SAVED*\nGame ID: %s (%s)' % (savegame_gist['id'], savegame_gist['html_url'])])
 
         # Restart current game
         if cmd == 'restart':
