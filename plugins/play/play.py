@@ -29,7 +29,7 @@ def process_message(data):
     global game_dict
     global last_command 
 
-    if data['text'].startswith( ('pobo play', '!') ):
+    if 'text' in data.keys() and data['text'].startswith( ('pobo play', '!') ):
 
         # Get command
         try:
@@ -143,12 +143,9 @@ def start_game(cmd):
     game_dict['savegame'] = None
     game_dict['cat'] = None
 
-
-
     url = '%s?game=%s' % (game_url, game_id)
     r = requests.get(url)
     return r
-
         
 
 def load_game(cmd):

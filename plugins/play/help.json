@@ -1,0 +1,25 @@
+{
+	"name": "play",
+	"description": "Play interactive text adventure games in Slack",
+	"example": "play pick up lantern",
+	"abbrev": "!",
+	"commands": [{
+		"name": "start <game id>",
+		"description": "Start playing the specified game"
+	}, {
+		"name": "<command to send to the game>",
+		"description": "How you interact with the game. 'look', 'north', etc."
+	}, {
+		"name": "list games",
+		"description": "Browse a list of games to play (organized by category)"
+	}, {
+		"name": "save",
+		"description": "Save current game state to a gist"
+	}, {
+		"name": "load <save game id>",
+		"description": "Load a saved game state and start game (given a save game id)"
+	}, {
+		"name": "restart",
+		"description": "Abandon current game state and restart from scratch"
+	}]
+}

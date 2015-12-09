@@ -1,0 +1,9 @@
+{
+	"name": "say",
+	"description": "An echo plugin to make sure pobo is working.",
+	"example": "say Self-reflexive robot is best robot",
+	"commands": [{
+		"name": "<message>",
+		"description": "Repeat the users message back to them"	
+	}]
+}
